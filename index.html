@@ -33,7 +33,9 @@
       .eyebrow { margin: 0 0 8px; color: var(--gold); font-size: 11px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
       h1 { margin: 0; font-size: clamp(30px, 6vw, 44px); letter-spacing: -.05em; line-height: 1; }
       .intro { max-width: 650px; margin: 12px 0 0; color: var(--muted); line-height: 1.55; }
-      .top-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 9px; }
+      .top-actions { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: flex-end; gap: 9px; }
+      .mode-control { display: grid; gap: 4px; color: var(--muted); font-size: 10px; font-weight: 750; }
+      .mode-control select { min-width: 175px; border: 1px solid var(--border); border-radius: 10px; background: #111b24; color: #edf3f7; padding: 9px 10px; }
       button { border: 1px solid var(--border); border-radius: 10px; background: var(--surface-raised); padding: 10px 14px; font-weight: 750; cursor: pointer; transition: border-color .15s, transform .15s, background .15s; }
       button:hover:not(:disabled) { border-color: #71899b; transform: translateY(-1px); }
       button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
@@ -225,6 +227,14 @@
           <p class="intro">Entrena tu criterio de draft: conoce el mapa, lee las composiciones y resuelve un turno de selección que puede tocarte en cualquier momento.</p>
         </div>
         <div class="top-actions">
+          <label class="mode-control" for="pick-mode">
+            <span>Turno para nuevo escenario</span>
+            <select id="pick-mode">
+              <option value="random">Aleatorio · cualquier turno</option>
+              <option value="last-pick">Último pick · pick 10</option>
+              <option value="late-phase">Última fase · picks 7–10</option>
+            </select>
+          </label>
           <button id="new-draft" class="primary" type="button">Nuevo escenario</button>
           <button id="reset-stats" type="button" title="Reiniciar el contador local">Partidas: <span id="game-count">0</span></button>
         </div>
@@ -320,7 +330,7 @@
               <li>Pick 1 del primer equipo; luego 2 del rival, 2 del primero y 1 del rival.</li>
               <li>Segunda fase: un ban por equipo; después picks 1, 2 y 1.</li>
             </ol>
-            <p>Tu turno se sortea entre las rondas de selección. En un turno doble puedes elegir dos héroes normales o a Cho y Gall juntos; la pareja ocupa ambos picks. Los demás picks se simulan con una lógica de composición.</p>
+            <p>Elige si tu turno será aleatorio, siempre el último pick o una ronda de la fase final (picks 7–10, después del segundo ban). En un turno doble puedes elegir dos héroes normales o a Cho y Gall juntos; la pareja ocupa ambos picks. Los demás picks se simulan con una lógica de composición.</p>
             <p class="disclaimer">Roster orientativo con Xal'atath. Cho y Gall se banean por separado (se puede banear a uno o a ambos); si cualquiera está baneado, no se puede elegir la pareja. Para pickearlos deben estar disponibles los dos y tu turno debe ser doble. Retratos e imágenes de mapas de <a href="https://nexuscompendium.com/" target="_blank" rel="noopener noreferrer">The Nexus Compendium</a>; requieren conexión a internet.</p>
           </section>
         </aside>
@@ -389,6 +399,7 @@
         { side: 0, count: 1 }, { side: 1, count: 2 }, { side: 0, count: 2 }, { side: 1, count: 1 },
         { side: 1, count: 1 }, { side: 0, count: 2 }, { side: 1, count: 1 }
       ];
+      const pickModes = ["random", "last-pick", "late-phase"];
       const state = {
         map: null, teams: { blue: [], red: [] }, bans: { blue: [], red: [] },
         userTeam: "blue", firstTeam: "blue", userTurn: 0, userTurnCount: 1,
@@ -400,6 +411,7 @@
         map: $("#map-name"), feature: $("#map-feature"), turn: $("#turn-meta"), challenge: $("#challenge"),
         blueSlots: $("#blue-slots"), redSlots: $("#red-slots"), blueCount: $("#blue-count"), redCount: $("#red-count"),
         blueBans: $("#blue-bans"), redBans: $("#red-bans"), progress: $("#draft-progress"),
+        pickMode: $("#pick-mode"),
         pickerStatus: $("#picker-status"), heroList: $("#hero-list"), search: $("#hero-search"),
         role: $("#role-filter"), confirm: $("#confirm-pick"), hint: $("#pick-hint"), analysis: $("#analysis"),
         myTeamCallout: $("#my-team-callout"), blueTeam: $("#blue-team"), redTeam: $("#red-team"),
@@ -464,6 +476,11 @@
       function getStoredGames() {
         const value = Number(localStorage.getItem("draft-lab-games") || "0");
         return Number.isFinite(value) && value >= 0 ? value : 0;
+      }
+
+      function getStoredPickMode() {
+        const mode = localStorage.getItem("draft-lab-pick-mode");
+        return pickModes.includes(mode) ? mode : "random";
       }
 
       function availableHeroes(pickCount = 1) {
@@ -835,7 +852,15 @@
           nextPick += count;
           return turn;
         });
-        state.userTurnIndex = Math.floor(Math.random() * state.pickTurns.length);
+        const eligibleTurnIndexes = state.pickTurns
+          .map((turn, index) => ({ turn, index }))
+          .filter(({ turn }) => {
+            if (nodes.pickMode.value === "last-pick") return turn.start + turn.count === 10;
+            if (nodes.pickMode.value === "late-phase") return turn.start >= 6;
+            return true;
+          })
+          .map(({ index }) => index);
+        state.userTurnIndex = randomItem(eligibleTurnIndexes);
         const userTurn = state.pickTurns[state.userTurnIndex];
         state.userTurn = userTurn.start;
         state.userTurnCount = userTurn.count;
@@ -880,6 +905,10 @@
       }
 
       $("#new-draft").addEventListener("click", startDraft);
+      nodes.pickMode.value = getStoredPickMode();
+      nodes.pickMode.addEventListener("change", () => {
+        localStorage.setItem("draft-lab-pick-mode", nodes.pickMode.value);
+      });
       $("#reset-stats").addEventListener("click", () => {
         localStorage.removeItem("draft-lab-games");
         $("#game-count").textContent = "0";

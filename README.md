@@ -2,6 +2,14 @@
 
 Simulador local para practicar drafts de Ranked: mapa, bans, composiciones y un turno de pick aleatorio. No necesita servidor ni dependencias.
 
+## Modos de turno
+
+- **Aleatorio:** cualquier ronda de picks.
+- **Último pick:** siempre el pick 10.
+- **Última fase:** una ronda aleatoria entre los picks 7 y 10, después del segundo ban.
+
+La opción elegida se conserva en este navegador.
+
 ## Probar localmente
 
 Abre `index.html` en un navegador. Las imágenes de héroes y mapas requieren conexión a internet.
