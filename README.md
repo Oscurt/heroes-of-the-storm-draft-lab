@@ -10,6 +10,8 @@ Simulador local para practicar drafts de Ranked: mapa, bans, composiciones y un 
 
 La opción elegida se conserva en este navegador.
 
+Los picks simulados buscan armar composiciones razonables, pero no fuerzan que cada equipo cubra siempre los mismos roles; pueden quedar huecos para que el último pick también sea una decisión de tanque, sanador o bruiser.
+
 ## Probar localmente
 
 Abre `index.html` en un navegador. Las imágenes de héroes y mapas requieren conexión a internet.

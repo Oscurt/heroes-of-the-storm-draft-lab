@@ -606,15 +606,15 @@
         const n = team.length;
         const role = hero.role;
         let score = Math.random() * 0.25;
-        if (n === 0) return score + (role === "Tanque" || role === "Sanador" ? 1 : 0);
-        if (!roleCounts["Tanque"] && role === "Tanque") score += 5;
-        if (!roleCounts["Sanador"] && role === "Sanador") score += 5;
-        if (!roleCounts["Bruiser"] && role === "Bruiser") score += 3.7;
-        if (role === "Asesino a distancia" && !roleCounts["Asesino a distancia"]) score += 3.2;
-        if (role === "Asesino a distancia" && roleCounts["Asesino a distancia"] === 1) score += 1.3;
-        if (role === "Asesino cuerpo a cuerpo" && !roleCounts["Asesino cuerpo a cuerpo"]) score += 1.4;
-        if (roleCounts[role]) score -= role === "Sanador" || role === "Tanque" ? 4 : 1.8;
-        if (n >= 3 && !roleCounts["Sanador"] && role !== "Sanador") score -= 1.5;
+        if (n === 0) return score + (role === "Tanque" || role === "Sanador" ? 0.45 : 0);
+        if (!roleCounts["Tanque"] && role === "Tanque") score += 1.2;
+        if (!roleCounts["Sanador"] && role === "Sanador") score += 2.2;
+        if (!roleCounts["Bruiser"] && role === "Bruiser") score += 1.4;
+        if (role === "Asesino a distancia" && !roleCounts["Asesino a distancia"]) score += 1.3;
+        if (role === "Asesino a distancia" && roleCounts["Asesino a distancia"] === 1) score += 0.45;
+        if (role === "Asesino cuerpo a cuerpo" && !roleCounts["Asesino cuerpo a cuerpo"]) score += 0.8;
+        if (roleCounts[role]) score -= role === "Sanador" || role === "Tanque" ? 1.2 : 0.8;
+        if (n >= 3 && !roleCounts["Sanador"] && role !== "Sanador") score -= 0.5;
         return score;
       }
 
