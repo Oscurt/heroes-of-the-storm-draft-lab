@@ -1,0 +1,894 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#101923" />
+    <title>Draft Lab — Heroes of the Storm</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: #edf3f7;
+        background: #101923;
+        font-synthesis: none;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        --surface: #182430;
+        --surface-raised: #202f3d;
+        --border: #314352;
+        --muted: #a4b3bf;
+        --gold: #f2c879;
+        --blue: #71b7ee;
+        --red: #ef8981;
+        --green: #8bd6a5;
+      }
+
+      * { box-sizing: border-box; }
+      body { min-width: 320px; min-height: 100vh; margin: 0; }
+      button, input, select { font: inherit; }
+      button { color: inherit; }
+      .page { width: min(100% - 32px, 1180px); margin: 0 auto; padding: 34px 0 56px; }
+      header { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 24px; }
+      .eyebrow { margin: 0 0 8px; color: var(--gold); font-size: 11px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
+      h1 { margin: 0; font-size: clamp(30px, 6vw, 44px); letter-spacing: -.05em; line-height: 1; }
+      .intro { max-width: 650px; margin: 12px 0 0; color: var(--muted); line-height: 1.55; }
+      .top-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 9px; }
+      button { border: 1px solid var(--border); border-radius: 10px; background: var(--surface-raised); padding: 10px 14px; font-weight: 750; cursor: pointer; transition: border-color .15s, transform .15s, background .15s; }
+      button:hover:not(:disabled) { border-color: #71899b; transform: translateY(-1px); }
+      button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+      button:disabled { cursor: not-allowed; opacity: .4; }
+      .primary { color: #19212a; border-color: var(--gold); background: var(--gold); }
+      .primary:hover:not(:disabled) { border-color: #ffdc9a; background: #ffdc9a; }
+      .layout { display: grid; grid-template-columns: minmax(0, 1fr) 310px; align-items: start; gap: 16px; }
+      .main-column, .side-column { display: grid; gap: 16px; }
+      .panel { border: 1px solid var(--border); border-radius: 15px; background: var(--surface); }
+      .scenario { display: grid; grid-template-columns: 1fr auto; gap: 18px; padding: 18px 20px; }
+      .map-heading { display: flex; align-items: center; gap: 12px; }
+      .map-art { width: 100px; height: 66px; flex: 0 0 auto; overflow: hidden; border: 1px solid var(--border); border-radius: 9px; background: #111b24; }
+      .map-art img { width: 100%; height: 100%; object-fit: cover; }
+      .scenario h2 { margin: 0; font-size: 20px; }
+      .scenario-meta { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+      .pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 9px; border: 1px solid var(--border); border-radius: 99px; color: #d8e2e9; font-size: 12px; font-weight: 700; }
+      .objective { align-self: center; max-width: 250px; color: var(--muted); font-size: 13px; line-height: 1.45; text-align: right; }
+      .objective strong { display: block; margin-bottom: 3px; color: var(--gold); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; }
+      .draft-panel { padding: 18px; }
+      .section-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 13px; }
+      .section-heading h2, .side-title { margin: 0; font-size: 15px; }
+      .section-heading span { color: var(--muted); font-size: 12px; }
+      .teams { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+      .team { min-width: 0; padding: 13px; border: 1px solid var(--border); border-radius: 12px; background: #131e28; }
+      .team.user-team { border: 2px solid var(--gold); background: linear-gradient(145deg, #29271f, #131e28 68%); box-shadow: 0 0 0 2px #f2c8791a; }
+      .team-heading { display: flex; justify-content: space-between; align-items: center; margin-bottom: 11px; font-size: 12px; font-weight: 850; letter-spacing: .08em; text-transform: uppercase; }
+      .team-marker { display: inline-flex; align-items: center; gap: 6px; }
+      .team-badge { display: none; padding: 4px 7px; border-radius: 99px; color: #18202a; background: var(--gold); font-size: 9px; letter-spacing: .06em; }
+      .user-team .team-badge { display: inline-flex; }
+      .your-side { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; padding: 11px 13px; border: 1px solid #806d43; border-radius: 10px; background: #322d20; }
+      .your-side-icon { display: grid; width: 32px; height: 32px; flex: 0 0 auto; place-items: center; border-radius: 8px; color: #1a2229; background: var(--gold); font-size: 17px; font-weight: 900; }
+      .your-side-copy { display: grid; gap: 2px; }
+      .your-side-copy strong { color: var(--gold); font-size: 14px; letter-spacing: .04em; text-transform: uppercase; }
+      .your-side-copy span { color: #c8c4b6; font-size: 11px; }
+      .blue-text { color: var(--blue); }
+      .red-text { color: var(--red); }
+      .slots { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+      .slot { display: grid; min-height: 88px; place-content: center; gap: 4px; border: 1px dashed #3b4a57; border-radius: 9px; color: #71808b; text-align: center; }
+      .slot.filled { border-style: solid; border-color: #435563; color: #f1f4f7; background: #1c2a35; }
+      .slot.mine { border-color: var(--gold); box-shadow: inset 0 0 0 1px #f2c87933; }
+      .slot-portrait { width: 46px; height: 46px; margin: 0 auto; border-radius: 7px; object-fit: cover; background: #0c151d; }
+      .slot-name { overflow: hidden; max-width: 100%; padding: 0 2px; font-size: 11px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+      .slot-role { color: var(--muted); font-size: 9px; }
+      .slot-empty { font-size: 11px; }
+      .bans { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+      .ban-row { display: flex; align-items: center; gap: 7px; min-width: 0; color: var(--muted); font-size: 11px; }
+      .ban-list { display: flex; min-width: 0; flex: 1; gap: 5px; }
+      .ban-label { flex: 0 0 auto; font-weight: 800; text-transform: uppercase; }
+      .ban-token { display: flex; min-width: 0; align-items: center; gap: 6px; overflow: hidden; padding: 3px 6px 3px 3px; border: 1px solid #594247; border-radius: 7px; color: #f0b4ae; }
+      .ban-portrait { width: 28px; height: 28px; flex: 0 0 auto; border-radius: 5px; object-fit: cover; background: #0c151d; }
+      .ban-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .ban-token.empty { border-style: dashed; border-color: #43515d; color: #76838d; }
+      .picker { padding: 18px; }
+      .picker .section-heading { margin-bottom: 12px; }
+      .picker-status { color: var(--gold) !important; font-weight: 800; }
+      .picker-controls { display: flex; gap: 8px; margin-bottom: 11px; }
+      .picker-controls input, .picker-controls select { min-width: 0; border: 1px solid var(--border); border-radius: 9px; background: #111b24; color: #edf3f7; padding: 9px 10px; }
+      .picker-controls input { flex: 1; }
+      .picker-controls select { width: 135px; }
+      .hero-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; max-height: 360px; overflow: auto; padding: 1px 2px 2px 1px; }
+      .hero-option { display: flex; min-width: 0; min-height: 62px; align-items: center; gap: 8px; padding: 6px; text-align: left; }
+      .hero-portrait { width: 42px; height: 42px; flex: 0 0 auto; border-radius: 7px; object-fit: cover; background: #0c151d; }
+      .hero-pair-portraits { display: flex; flex: 0 0 auto; padding-left: 4px; }
+      .hero-pair-portraits .hero-portrait { width: 35px; height: 42px; margin-left: -4px; border: 1px solid var(--surface); }
+      .hero-copy { display: grid; min-width: 0; gap: 3px; }
+      .hero-copy span { overflow: hidden; font-size: 12px; font-weight: 750; text-overflow: ellipsis; white-space: nowrap; }
+      .hero-copy small { overflow: hidden; color: var(--muted); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+      .hero-option.selected { border-color: var(--gold); background: #373327; }
+      .empty-state { grid-column: 1 / -1; padding: 24px; color: var(--muted); text-align: center; }
+      .submit-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 13px; }
+      .submit-row p { margin: 0; color: var(--muted); font-size: 12px; }
+      .summary { padding: 18px; }
+      .summary h2 { margin: 0 0 10px; font-size: 15px; }
+      .summary p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.55; }
+      .summary ul { display: grid; gap: 7px; margin: 12px 0 0; padding: 0; list-style: none; }
+      .summary li { padding: 9px 10px; border-radius: 8px; background: #131e28; color: #d5dfe5; font-size: 12px; line-height: 1.45; }
+      .summary li strong { color: var(--green); }
+      .summary li.caution strong { color: var(--gold); }
+      .rules { padding: 16px 18px; }
+      .rules p { margin: 9px 0 0; color: var(--muted); font-size: 12px; line-height: 1.55; }
+      .rules ol { margin: 9px 0 0; padding-left: 19px; color: #d5dfe5; font-size: 12px; line-height: 1.7; }
+      .disclaimer { margin: 12px 0 0; color: #83919b; font-size: 11px; line-height: 1.45; }
+      .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; }
+      @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } .side-column { grid-template-columns: 1fr 1fr; } }
+      @media (max-width: 650px) {
+        .page { width: min(100% - 22px, 560px); padding-top: 23px; }
+        header { display: block; }
+        .top-actions { justify-content: flex-start; margin-top: 15px; }
+        .scenario { grid-template-columns: 1fr; gap: 10px; }
+        .objective { text-align: left; }
+        .teams { grid-template-columns: 1fr; }
+        .side-column { grid-template-columns: 1fr; }
+        .hero-list { grid-template-columns: repeat(2, minmax(0, 1fr)); max-height: 250px; }
+        .slots { gap: 4px; }
+        .slot { min-height: 57px; }
+      }
+      @media (min-width: 901px) and (min-height: 620px) {
+        html, body { height: 100%; }
+        body { min-height: 0; overflow: hidden; }
+        .page { display: flex; width: min(100% - 28px, 1560px); height: 100dvh; min-height: 0; flex-direction: column; padding: 12px 0; }
+        header { min-height: 46px; align-items: center; gap: 16px; margin-bottom: 10px; }
+        header > div:first-child { display: flex; align-items: center; gap: 12px; min-width: 0; }
+        header .eyebrow { margin: 0; white-space: nowrap; }
+        h1 { font-size: 27px; white-space: nowrap; }
+        .intro { overflow: hidden; max-width: none; margin: 0; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+        .top-actions { flex: 0 0 auto; }
+        .top-actions button { padding: 8px 11px; font-size: 12px; }
+        .layout { min-height: 0; flex: 1; grid-template-columns: minmax(0, 1fr) 270px; align-items: stretch; gap: 10px; }
+        .main-column { min-height: 0; grid-template-rows: auto auto minmax(0, 1fr); gap: 10px; }
+        .side-column { min-height: 0; grid-template-rows: minmax(0, 1fr) auto; gap: 10px; }
+        .panel { border-radius: 11px; }
+        .scenario { min-height: 90px; grid-template-columns: minmax(0, 1fr) minmax(180px, 280px); align-items: center; gap: 12px; padding: 9px 12px; }
+        .scenario > div:first-child { display: grid; grid-template-columns: auto 1fr; align-items: center; column-gap: 11px; }
+        .scenario .eyebrow { grid-column: 1 / -1; margin: 0 0 5px; font-size: 9px; }
+        .map-heading { gap: 9px; }
+        .map-art { width: 136px; height: 76px; border-radius: 8px; }
+        .scenario h2 { font-size: 21px; }
+        .scenario-meta { display: grid; justify-items: start; gap: 4px; margin: 0; }
+        .pill { padding: 4px 7px; font-size: 10px; }
+        .objective { max-width: none; font-size: 11px; line-height: 1.35; }
+        .objective strong { margin-bottom: 2px; font-size: 9px; }
+        .draft-panel { padding: 8px 10px; }
+        .section-heading { margin-bottom: 7px; }
+        .section-heading h2, .side-title { font-size: 13px; }
+        .section-heading span { font-size: 10px; }
+        .your-side { min-height: 29px; gap: 7px; margin-bottom: 6px; padding: 3px 7px; }
+        .your-side-icon { width: 21px; height: 21px; border-radius: 6px; font-size: 12px; }
+        .your-side-copy { display: flex; align-items: baseline; gap: 8px; }
+        .your-side-copy strong { font-size: 11px; }
+        .your-side-copy span { font-size: 10px; }
+        .teams { gap: 8px; }
+        .team, .team.user-team { padding: 6px 7px; border-radius: 9px; }
+        .team-heading { margin-bottom: 4px; font-size: 10px; }
+        .team-badge { padding: 3px 6px; font-size: 8px; }
+        .slots { gap: 4px; }
+        .slot { min-height: 58px; gap: 2px; border-radius: 7px; }
+        .slot-portrait { width: 32px; height: 32px; border-radius: 5px; }
+        .slot-name { font-size: 9px; }
+        .slot-role { font-size: 8px; }
+        .slot-empty { font-size: 9px; }
+        .bans { gap: 8px; margin-top: 6px; }
+        .ban-row { gap: 5px; font-size: 9px; }
+        .ban-list { gap: 4px; }
+        .ban-token { min-width: 0; flex: 1; gap: 4px; padding: 2px 4px 2px 2px; }
+        .ban-portrait { width: 21px; height: 21px; }
+        .ban-name { font-size: 9px; }
+        .picker { display: flex; min-height: 0; flex-direction: column; padding: 10px 12px; }
+        .picker .section-heading { flex: 0 0 auto; margin-bottom: 6px; }
+        .picker-controls { flex: 0 0 auto; gap: 6px; margin-bottom: 6px; }
+        .picker-controls input, .picker-controls select { padding: 6px 8px; font-size: 11px; }
+        .picker-controls select { width: 150px; }
+        .hero-list { min-height: 0; max-height: none; flex: 1; grid-template-columns: repeat(3, minmax(0, 1fr)); align-content: start; gap: 6px; }
+        .hero-option { min-height: 54px; gap: 8px; padding: 5px 7px; border-radius: 7px; }
+        .hero-portrait { width: 42px; height: 42px; border-radius: 6px; }
+        .hero-copy { gap: 2px; }
+        .hero-copy span { font-size: 11px; }
+        .hero-copy small { font-size: 9px; }
+        .submit-row { flex: 0 0 auto; min-height: 34px; gap: 8px; margin-top: 5px; }
+        .submit-row p { overflow: hidden; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+        .submit-row button { flex: 0 0 auto; padding: 7px 10px; font-size: 11px; }
+        .summary, .rules { min-height: 0; overflow: auto; padding: 12px; border-radius: 11px; }
+        .summary h2 { margin-bottom: 7px; font-size: 13px; }
+        .summary p { font-size: 11px; }
+        .summary ul { gap: 5px; margin-top: 8px; }
+        .summary li { padding: 6px 7px; font-size: 10px; }
+        .rules { padding: 10px 12px; }
+        .rules p, .rules ol { margin-top: 6px; font-size: 10px; line-height: 1.45; }
+        .rules ol { padding-left: 17px; }
+        .disclaimer { margin-top: 7px !important; font-size: 9px !important; }
+      }
+      @media (min-width: 901px) and (min-height: 620px) and (max-height: 720px) {
+        .intro { display: none; }
+        .scenario { min-height: 76px; }
+        .map-art { width: 116px; height: 64px; }
+        .slot { min-height: 57px; }
+        .slot-portrait { width: 29px; height: 29px; }
+        .hero-option { min-height: 47px; }
+        .hero-portrait { width: 36px; height: 36px; }
+      }
+      @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; } }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <header>
+        <div>
+          <p class="eyebrow">Práctica de ranked · Heroes of the Storm</p>
+          <h1>Draft Lab</h1>
+          <p class="intro">Entrena tu criterio de draft: conoce el mapa, lee las composiciones y resuelve un turno de selección que puede tocarte en cualquier momento.</p>
+        </div>
+        <div class="top-actions">
+          <button id="new-draft" class="primary" type="button">Nuevo escenario</button>
+          <button id="reset-stats" type="button" title="Reiniciar el contador local">Partidas: <span id="game-count">0</span></button>
+        </div>
+      </header>
+
+      <div class="layout">
+        <div class="main-column">
+          <section class="panel scenario" aria-labelledby="map-name">
+            <div>
+              <p class="eyebrow">Mapa de la partida</p>
+              <div class="map-heading">
+                <div id="map-art" class="map-art" aria-hidden="true"></div>
+                <h2 id="map-name">Preparando escenario…</h2>
+              </div>
+              <div class="scenario-meta">
+                <span id="map-feature" class="pill"></span>
+                <span id="turn-meta" class="pill"></span>
+              </div>
+            </div>
+            <div class="objective">
+              <strong>Tu desafío</strong>
+              <span id="challenge">Identifica qué necesita tu equipo antes de elegir.</span>
+            </div>
+          </section>
+
+          <section class="panel draft-panel" aria-labelledby="draft-title">
+            <div class="section-heading">
+              <h2 id="draft-title">Estado del draft</h2>
+              <span id="draft-progress">Fase de bans</span>
+            </div>
+            <div class="your-side" role="status" aria-live="polite">
+              <span class="your-side-icon" aria-hidden="true">★</span>
+              <span class="your-side-copy">
+                <strong id="my-team-callout">Tu equipo es AZUL</strong>
+                <span>Tu equipo está resaltado en dorado. El otro lado es el rival.</span>
+              </span>
+            </div>
+            <div class="teams">
+              <div class="team" id="blue-team">
+                <div class="team-heading"><span class="team-marker"><span class="blue-text" id="blue-label">Equipo azul</span><span class="team-badge">TÚ</span></span><span id="blue-count">0/5</span></div>
+                <div class="slots" id="blue-slots"></div>
+              </div>
+              <div class="team" id="red-team">
+                <div class="team-heading"><span class="team-marker"><span class="red-text" id="red-label">Equipo rojo</span><span class="team-badge">TÚ</span></span><span id="red-count">0/5</span></div>
+                <div class="slots" id="red-slots"></div>
+              </div>
+            </div>
+            <div class="bans">
+              <div class="ban-row"><span class="ban-label blue-text" id="blue-ban-label">Bans azul</span><span class="ban-list" id="blue-bans"></span></div>
+              <div class="ban-row"><span class="ban-label red-text" id="red-ban-label">Bans rojo</span><span class="ban-list" id="red-bans"></span></div>
+            </div>
+          </section>
+
+          <section class="panel picker" aria-labelledby="picker-title">
+            <div class="section-heading">
+              <h2 id="picker-title">Tu selección</h2>
+              <span id="picker-status" class="picker-status" aria-live="polite"></span>
+            </div>
+            <div class="picker-controls">
+              <label class="sr-only" for="hero-search">Buscar héroe</label>
+              <input id="hero-search" type="search" placeholder="Buscar héroe…" autocomplete="off" />
+              <label class="sr-only" for="role-filter">Filtrar por rol</label>
+              <select id="role-filter">
+                <option value="">Todos los roles</option>
+                <option>Tanque</option>
+                <option value="Bruiser">Guerrero / Bruiser</option>
+                <option>Sanador</option>
+                <option value="Apoyo">Apoyo (Support)</option>
+                <option value="Dúo (2 picks)">Dúo (2 picks)</option>
+                <option>Asesino a distancia</option>
+                <option>Asesino cuerpo a cuerpo</option>
+              </select>
+            </div>
+            <div id="hero-list" class="hero-list" role="listbox" aria-label="Héroes disponibles"></div>
+            <div class="submit-row">
+              <p id="pick-hint">Elige un héroe y luego confirma tu pick para revelar la partida.</p>
+              <button id="confirm-pick" class="primary" type="button" disabled>Confirmar pick</button>
+            </div>
+          </section>
+        </div>
+
+        <aside class="side-column">
+          <section class="panel summary" aria-labelledby="summary-title">
+            <h2 id="summary-title">Lectura de composición</h2>
+            <div id="analysis">
+              <p>Cuando confirmes tu pick, aquí verás una revisión orientativa de lo que aporta a la composición. No hay una única respuesta correcta.</p>
+            </div>
+          </section>
+          <section class="panel rules" aria-labelledby="rules-title">
+            <h2 class="side-title" id="rules-title">Orden de selección</h2>
+            <ol>
+              <li>Primera fase: dos bans por equipo, alternados.</li>
+              <li>Pick 1 del primer equipo; luego 2 del rival, 2 del primero y 1 del rival.</li>
+              <li>Segunda fase: un ban por equipo; después picks 1, 2 y 1.</li>
+            </ol>
+            <p>Tu turno se sortea entre las rondas de selección. En un turno doble puedes elegir dos héroes normales o a Cho y Gall juntos; la pareja ocupa ambos picks. Los demás picks se simulan con una lógica de composición.</p>
+            <p class="disclaimer">Roster orientativo con Xal'atath. Cho y Gall se banean por separado (se puede banear a uno o a ambos); si cualquiera está baneado, no se puede elegir la pareja. Para pickearlos deben estar disponibles los dos y tu turno debe ser doble. Retratos e imágenes de mapas de <a href="https://nexuscompendium.com/" target="_blank" rel="noopener noreferrer">The Nexus Compendium</a>; requieren conexión a internet.</p>
+          </section>
+        </aside>
+      </div>
+    </main>
+
+    <script>
+      const heroes = [
+        ["Abathur", "Apoyo"], ["Alarak", "Asesino cuerpo a cuerpo"], ["Alexstrasza", "Sanador"],
+        ["Ana", "Sanador"], ["Anduin", "Sanador"], ["Anub'arak", "Tanque"], ["Artanis", "Bruiser"],
+        ["Arthas", "Tanque"], ["Auriel", "Sanador"], ["Azmodan", "Asesino a distancia"],
+        ["Blaze", "Bruiser"], ["Brightwing", "Sanador"], ["The Butcher", "Asesino cuerpo a cuerpo"],
+        ["Cassia", "Asesino a distancia"], ["Chen", "Bruiser"], ["Cho'Gall", "Dúo (2 picks)"],
+        ["Chromie", "Asesino a distancia"], ["Deathwing", "Bruiser"], ["Deckard", "Sanador"],
+        ["Dehaka", "Bruiser"], ["Diablo", "Tanque"], ["D.Va", "Bruiser"], ["E.T.C.", "Tanque"],
+        ["Falstad", "Asesino a distancia"], ["Fenix", "Asesino a distancia"], ["Garrosh", "Tanque"],
+        ["Gazlowe", "Bruiser"], ["Genji", "Asesino a distancia"], ["Greymane", "Asesino a distancia"],
+        ["Gul'dan", "Asesino a distancia"], ["Hanzo", "Asesino a distancia"], ["Hogger", "Bruiser"],
+        ["Illidan", "Asesino cuerpo a cuerpo"], ["Imperius", "Bruiser"], ["Jaina", "Asesino a distancia"],
+        ["Johanna", "Tanque"], ["Junkrat", "Asesino a distancia"], ["Kael'thas", "Asesino a distancia"],
+        ["Kel'Thuzad", "Asesino a distancia"], ["Kerrigan", "Asesino cuerpo a cuerpo"],
+        ["Kharazim", "Sanador"], ["Leoric", "Bruiser"], ["Li Li", "Sanador"],
+        ["Li-Ming", "Asesino a distancia"], ["Lt. Morales", "Sanador"], ["Lúcio", "Sanador"],
+        ["Lunara", "Asesino a distancia"], ["Maiev", "Asesino cuerpo a cuerpo"],
+        ["Malfurion", "Sanador"], ["Mal'Ganis", "Tanque"], ["Malthael", "Bruiser"],
+        ["Medivh", "Apoyo"], ["Mei", "Tanque"], ["Mephisto", "Asesino a distancia"],
+        ["Muradin", "Tanque"], ["Murky", "Asesino cuerpo a cuerpo"],
+        ["Nazeebo", "Asesino a distancia"], ["Nova", "Asesino a distancia"],
+        ["Orphea", "Asesino a distancia"], ["Probius", "Asesino a distancia"],
+        ["Qhira", "Asesino cuerpo a cuerpo"], ["Ragnaros", "Bruiser"],
+        ["Raynor", "Asesino a distancia"], ["Rehgar", "Sanador"], ["Rexxar", "Bruiser"],
+        ["Samuro", "Asesino cuerpo a cuerpo"], ["Sgt. Hammer", "Asesino a distancia"],
+        ["Sonya", "Bruiser"], ["Stitches", "Tanque"], ["Stukov", "Sanador"],
+        ["Sylvanas", "Asesino a distancia"], ["Tassadar", "Asesino a distancia"],
+        ["The Lost Vikings", "Apoyo"], ["Thrall", "Bruiser"], ["Tracer", "Asesino a distancia"],
+        ["Tychus", "Asesino a distancia"], ["Tyrael", "Tanque"], ["Tyrande", "Sanador"],
+        ["Uther", "Sanador"], ["Valeera", "Asesino cuerpo a cuerpo"],
+        ["Valla", "Asesino a distancia"], ["Varian", "Bruiser"], ["Whitemane", "Sanador"],
+        ["Xal'atath", "Asesino a distancia"], ["Xul", "Bruiser"], ["Yrel", "Bruiser"],
+        ["Zagara", "Asesino a distancia"], ["Zarya", "Apoyo"], ["Zeratul", "Asesino cuerpo a cuerpo"],
+        ["Zul'jin", "Asesino a distancia"]
+      ].map(([name, role]) => ({ name, role }));
+      const banHeroes = heroes.flatMap((hero) => hero.name === "Cho'Gall"
+        ? [{ name: "Cho", role: "Tanque" }, { name: "Gall", role: "Asesino a distancia" }]
+        : [hero]);
+
+      const maps = [
+        { name: "Alterac Pass", image: "alterac-pass", feature: "Objetivo: escolta y campamentos", need: "Oleadas, control de zonas y peleas sostenidas alrededor del objetivo.", tags: ["teamfight", "wave", "camp"] },
+        { name: "Battlefield of Eternity", image: "battlefield-of-eternity", feature: "Objetivo: daño a inmortal", need: "Daño sostenido al objetivo y capacidad de pelear en pasillos.", tags: ["boss", "teamfight", "siege"] },
+        { name: "Blackheart's Bay", image: "blackhearts-bay", feature: "Objetivo: monedas y presión", need: "Presión de líneas, control de visión y héroes que puedan rotar con seguridad.", tags: ["wave", "siege", "camp"] },
+        { name: "Braxis Holdout", image: "braxis-holdout", feature: "Objetivo: control de dos líneas", need: "Buen 1v1, control de línea y respuesta a oleadas.", tags: ["solo", "wave", "teamfight"] },
+        { name: "Cursed Hollow", image: "cursed-hollow", feature: "Objetivo: tributos", need: "Pelea de equipo y capacidad de controlar zonas durante tiempo.", tags: ["teamfight", "wave", "camp"] },
+        { name: "Dragon Shire", image: "dragon-shire", feature: "Objetivo: santuarios", need: "Presión de línea, un buen sololane y rotaciones coordinadas.", tags: ["solo", "wave", "siege"] },
+        { name: "Garden of Terror", image: "garden-of-terror", feature: "Objetivo: control de jardín", need: "Limpieza de oleadas, presión de mapa y peleas en espacios cerrados.", tags: ["wave", "siege", "teamfight"] },
+        { name: "Hanamura Temple", image: "hanamura", feature: "Objetivo: carga", need: "Control de rutas, limpieza de campamentos y movilidad para rotar.", tags: ["camp", "wave", "siege"] },
+        { name: "Haunted Mines", image: "haunted-mines", feature: "Objetivo: calaveras y gólem", need: "Limpieza rápida dentro de las minas y control del gólem/campamentos para sacar ventaja en las líneas.", tags: ["wave", "camp", "teamfight"] },
+        { name: "Infernal Shrines", image: "infernal-shrines", feature: "Objetivo: oleadas de guardianes", need: "Limpieza rápida del objetivo y una composición sólida de teamfight.", tags: ["wave", "teamfight", "siege"] },
+        { name: "Sky Temple", image: "sky-temple", feature: "Objetivo: control de templos", need: "Presión de líneas y capacidad de disputar varios puntos del mapa.", tags: ["wave", "solo", "siege"] },
+        { name: "Tomb of the Spider Queen", image: "tomb-of-the-spider-queen", feature: "Objetivo: gemas y oleadas", need: "Limpieza rápida, control de línea y peleas cortas en pasillos.", tags: ["wave", "teamfight", "siege"] },
+        { name: "Towers of Doom", image: "towers-of-doom", feature: "Objetivo: altares y líneas", need: "Presión global, control de visión y héroes que aguanten asedios.", tags: ["wave", "siege", "teamfight"] },
+        { name: "Volskaya Foundry", image: "volskaya-foundry", feature: "Objetivo: control de puntos", need: "Peleas sostenidas, limpieza de oleadas y control de zonas.", tags: ["teamfight", "wave", "camp"] },
+        { name: "Warhead Junction", image: "warhead-junction", feature: "Objetivo: control del mapa", need: "Movilidad, presión en líneas y una buena respuesta a rotaciones.", tags: ["solo", "wave", "siege"] }
+      ];
+
+      const pickTurnPattern = [
+        { side: 0, count: 1 }, { side: 1, count: 2 }, { side: 0, count: 2 }, { side: 1, count: 1 },
+        { side: 1, count: 1 }, { side: 0, count: 2 }, { side: 1, count: 1 }
+      ];
+      const state = {
+        map: null, teams: { blue: [], red: [] }, bans: { blue: [], red: [] },
+        userTeam: "blue", firstTeam: "blue", userTurn: 0, userTurnCount: 1,
+        pickTurns: [], userTurnIndex: 0, pickedHero: null,
+        finished: false, resolving: false, secondBanPhase: false
+      };
+      const $ = (selector) => document.querySelector(selector);
+      const nodes = {
+        map: $("#map-name"), feature: $("#map-feature"), turn: $("#turn-meta"), challenge: $("#challenge"),
+        blueSlots: $("#blue-slots"), redSlots: $("#red-slots"), blueCount: $("#blue-count"), redCount: $("#red-count"),
+        blueBans: $("#blue-bans"), redBans: $("#red-bans"), progress: $("#draft-progress"),
+        pickerStatus: $("#picker-status"), heroList: $("#hero-list"), search: $("#hero-search"),
+        role: $("#role-filter"), confirm: $("#confirm-pick"), hint: $("#pick-hint"), analysis: $("#analysis"),
+        myTeamCallout: $("#my-team-callout"), blueTeam: $("#blue-team"), redTeam: $("#red-team"),
+        blueLabel: $("#blue-label"), redLabel: $("#red-label"),
+        blueBanLabel: $("#blue-ban-label"), redBanLabel: $("#red-ban-label")
+      };
+      const roleShort = {
+        "Asesino a distancia": "Asesino a distancia", "Asesino cuerpo a cuerpo": "Asesino cuerpo a cuerpo",
+        "Bruiser": "Guerrero / Bruiser", "Apoyo": "Apoyo", "Dúo (2 picks)": "Dúo: Cho + Gall"
+      };
+      const roleFit = {
+        "Tanque": ["teamfight"], "Bruiser": ["solo", "teamfight"], "Sanador": ["teamfight"],
+        "Apoyo": ["teamfight"], "Dúo (2 picks)": ["teamfight"],
+        "Asesino a distancia": ["wave", "siege"], "Asesino cuerpo a cuerpo": ["teamfight"]
+      };
+      const heroTraits = {
+        "Cho": ["teamfight"], "Gall": ["teamfight"],
+        "Abathur": ["global", "siege"], "Dehaka": ["global", "solo"], "Falstad": ["global", "wave"],
+        "Brightwing": ["global"], "Ragnaros": ["wave", "siege"], "Sylvanas": ["siege", "wave"],
+        "Zagara": ["siege", "wave"], "Valla": ["wave"], "Greymane": ["boss", "camp"],
+        "Tychus": ["boss", "teamfight"], "Jaina": ["wave", "teamfight"], "Kael'thas": ["wave", "teamfight"],
+        "Li-Ming": ["teamfight"], "Lunara": ["siege"], "Hanzo": ["teamfight"], "Murky": ["solo", "siege"],
+        "The Lost Vikings": ["global", "solo"], "Rehgar": ["camp"], "Kharazim": ["boss", "camp"],
+        "Anub'arak": ["teamfight"], "Johanna": ["wave", "teamfight"], "E.T.C.": ["teamfight"],
+        "Diablo": ["teamfight"], "Mei": ["teamfight"], "Garrosh": ["teamfight"], "Sonya": ["solo", "camp"],
+        "Rexxar": ["solo"], "Leoric": ["solo", "teamfight"], "Blaze": ["solo", "teamfight"],
+        "Tassadar": ["wave", "siege"], "Junkrat": ["siege", "teamfight"], "Nazeebo": ["siege", "wave"]
+      };
+
+      function randomItem(items) {
+        return items[Math.floor(Math.random() * items.length)];
+      }
+
+      function imageSlug(name) {
+        const aliases = {
+          "Cho'Gall": "cho", "D.Va": "dva", "E.T.C.": "etc", "Lt. Morales": "lt-morales",
+          "Lúcio": "lucio", "Sgt. Hammer": "sgt-hammer", "The Butcher": "the-butcher",
+          "The Lost Vikings": "the-lost-vikings"
+        };
+        return aliases[name] || name.normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+          .replace(/['’]/g, "").toLocaleLowerCase("en").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+      }
+
+      function makeImage(src, alt, className) {
+        const image = document.createElement("img");
+        image.className = className;
+        image.src = src;
+        image.alt = alt;
+        image.loading = "lazy";
+        image.addEventListener("error", () => image.removeAttribute("src"), { once: true });
+        return image;
+      }
+
+      function heroPortrait(name, className) {
+        return makeImage(
+          `https://nexuscompendium.com/images/portraits/${imageSlug(name)}.png`,
+          `Retrato de ${name}`,
+          className
+        );
+      }
+
+      function getStoredGames() {
+        const value = Number(localStorage.getItem("draft-lab-games") || "0");
+        return Number.isFinite(value) && value >= 0 ? value : 0;
+      }
+
+      function availableHeroes(pickCount = 1) {
+        const used = new Set([
+          ...state.bans.blue, ...state.bans.red,
+          ...state.teams.blue.map((pick) => pick.name), ...state.teams.red.map((pick) => pick.name)
+        ]);
+        const duoAlreadyPicked = used.has("Cho") || used.has("Gall");
+        return heroes.filter((hero) => {
+          if (hero.name === "Cho'Gall" && (pickCount < 2 || duoAlreadyPicked)) return false;
+          return !used.has(hero.name);
+        });
+      }
+
+      function picksForHero(hero) {
+        if (hero.name !== "Cho'Gall") return [hero];
+        return [
+          { name: "Cho", role: "Tanque", duo: "Cho'Gall" },
+          { name: "Gall", role: "Asesino a distancia", duo: "Cho'Gall" }
+        ];
+      }
+
+      function mapScore(hero, team) {
+        const tags = heroTraits[hero.name] || [];
+        return tags.reduce((score, tag) => score + (state.map.tags.includes(tag) ? 1.4 : 0), 0);
+      }
+
+      function roleNeedScore(hero, team) {
+        const roleCounts = team.reduce((counts, pick) => {
+          counts[pick.role] = (counts[pick.role] || 0) + 1;
+          return counts;
+        }, {});
+        const n = team.length;
+        const role = hero.role;
+        let score = Math.random() * 0.25;
+        if (n === 0) return score + (role === "Tanque" || role === "Sanador" ? 1 : 0);
+        if (!roleCounts["Tanque"] && role === "Tanque") score += 5;
+        if (!roleCounts["Sanador"] && role === "Sanador") score += 5;
+        if (!roleCounts["Bruiser"] && role === "Bruiser") score += 3.7;
+        if (role === "Asesino a distancia" && !roleCounts["Asesino a distancia"]) score += 3.2;
+        if (role === "Asesino a distancia" && roleCounts["Asesino a distancia"] === 1) score += 1.3;
+        if (role === "Asesino cuerpo a cuerpo" && !roleCounts["Asesino cuerpo a cuerpo"]) score += 1.4;
+        if (roleCounts[role]) score -= role === "Sanador" || role === "Tanque" ? 4 : 1.8;
+        if (n >= 3 && !roleCounts["Sanador"] && role !== "Sanador") score -= 1.5;
+        return score;
+      }
+
+      function botPick(teamKey, pickCount = 1) {
+        const team = state.teams[teamKey];
+        const opponents = state.teams[teamKey === "blue" ? "red" : "blue"];
+        const remaining = availableHeroes(pickCount);
+        const hero = remaining.map((candidate) => {
+          let roleScore = roleNeedScore(candidate, team);
+          if (candidate.name === "Cho'Gall") {
+            const roles = team.map((pick) => pick.role);
+            if (!roles.includes("Tanque")) roleScore += 2.5;
+            if (!roles.includes("Asesino a distancia")) roleScore += 2.5;
+            roleScore -= 1.5;
+          }
+          const mapValue = mapScore(candidate, team);
+          const counter = opponents.some((opponent) => {
+            if (candidate.role === "Sanador" && opponent.role === "Asesino cuerpo a cuerpo") return 0.55;
+            if (candidate.role === "Tanque" && opponent.role === "Asesino a distancia") return 0.2;
+            return 0;
+          });
+          return { candidate, score: roleScore + mapValue + counter };
+        }).sort((a, b) => b.score - a.score);
+        const top = hero.slice(0, Math.min(5, hero.length));
+        const chosen = randomItem(top).candidate;
+        team.push(...picksForHero(chosen));
+        return chosen;
+      }
+
+      function simulateBotTurn(turn) {
+        let remaining = turn.count;
+        while (remaining > 0) {
+          const chosen = botPick(turn.team, remaining);
+          remaining -= chosen.name === "Cho'Gall" ? 2 : 1;
+        }
+      }
+
+      function makeBan(teamKey, alreadyBanned) {
+        const first = [...banHeroes].sort((a, b) =>
+          (mapScore(b) + roleFit[b.role].filter((tag) => state.map.tags.includes(tag)).length) -
+          (mapScore(a) + roleFit[a.role].filter((tag) => state.map.tags.includes(tag)).length)
+        ).filter((hero) => !alreadyBanned.includes(hero.name) && !state.bans.blue.includes(hero.name) &&
+          !state.bans.red.includes(hero.name) && !state.teams.blue.some((pick) => pick.name === hero.name) &&
+          !state.teams.red.some((pick) => pick.name === hero.name));
+        const targets = first.slice(0, 12);
+        return randomItem(targets).name;
+      }
+
+      function simulateFirstBanPhase() {
+        const otherTeam = state.firstTeam === "blue" ? "red" : "blue";
+        [state.firstTeam, otherTeam, state.firstTeam, otherTeam]
+          .forEach((team) => state.bans[team].push(makeBan(team, state.bans[team])));
+      }
+
+      function simulateSecondBanPhase() {
+        if (state.secondBanPhase) return;
+        const otherTeam = state.firstTeam === "blue" ? "red" : "blue";
+        [otherTeam, state.firstTeam]
+          .forEach((team) => state.bans[team].push(makeBan(team, state.bans[team])));
+        state.secondBanPhase = true;
+      }
+
+      function renderBans(element, bans) {
+        element.replaceChildren();
+        for (let index = 0; index < 3; index += 1) {
+          const token = document.createElement("span");
+          token.className = `ban-token${bans[index] ? "" : " empty"}`;
+          if (bans[index]) {
+            token.append(heroPortrait(bans[index], "ban-portrait"));
+            const name = document.createElement("span");
+            name.className = "ban-name";
+            name.textContent = bans[index];
+            token.append(name);
+          } else {
+            token.textContent = "—";
+          }
+          element.append(token);
+        }
+      }
+
+      function renderTeam(teamKey) {
+        const target = teamKey === "blue" ? nodes.blueSlots : nodes.redSlots;
+        target.replaceChildren();
+        for (let index = 0; index < 5; index += 1) {
+          const slot = document.createElement("div");
+          const hero = state.teams[teamKey][index];
+          const userPick = hero && (state.resolving || state.finished) && teamKey === state.userTeam &&
+            state.userSlots?.includes(index);
+          slot.className = `slot${hero ? " filled" : ""}${userPick ? " mine" : ""}`;
+          if (hero) {
+            slot.append(heroPortrait(hero.name, "slot-portrait"));
+            const name = document.createElement("span");
+            name.className = "slot-name";
+            name.textContent = hero.name;
+            const role = document.createElement("span");
+            role.className = "slot-role";
+            role.textContent = roleShort[hero.role] || hero.role;
+            slot.append(name, role);
+          } else {
+            const empty = document.createElement("span");
+            empty.className = "slot-empty";
+            empty.textContent = "Por elegir";
+            slot.append(empty);
+          }
+          target.append(slot);
+        }
+      }
+
+      function renderDraft() {
+        const userName = state.userTeam === "blue" ? "AZUL" : "ROJO";
+        nodes.myTeamCallout.textContent = `TU EQUIPO ES ${userName}`;
+        nodes.blueTeam.classList.toggle("user-team", state.userTeam === "blue");
+        nodes.redTeam.classList.toggle("user-team", state.userTeam === "red");
+        nodes.blueLabel.textContent = state.userTeam === "blue" ? "Tu equipo · Azul" : "Rival · Equipo azul";
+        nodes.redLabel.textContent = state.userTeam === "red" ? "Tu equipo · Rojo" : "Rival · Equipo rojo";
+        nodes.blueBanLabel.textContent = state.userTeam === "blue" ? "Tus bans" : "Bans rival";
+        nodes.redBanLabel.textContent = state.userTeam === "red" ? "Tus bans" : "Bans rival";
+        renderTeam("blue");
+        renderTeam("red");
+        nodes.blueCount.textContent = `${state.teams.blue.length}/5`;
+        nodes.redCount.textContent = `${state.teams.red.length}/5`;
+        renderBans(nodes.blueBans, state.bans.blue);
+        renderBans(nodes.redBans, state.bans.red);
+      }
+
+      function renderHeroList() {
+        const query = nodes.search.value.trim().toLocaleLowerCase("es");
+        const role = nodes.role.value;
+        const filtered = availableHeroes(state.userTurnCount).filter((hero) =>
+          hero.name.toLocaleLowerCase("es").includes(query) && (!role || hero.role === role)
+        );
+        nodes.heroList.replaceChildren();
+        if (!filtered.length) {
+          const empty = document.createElement("p");
+          empty.className = "empty-state";
+          empty.textContent = "No hay héroes disponibles con ese filtro.";
+          nodes.heroList.append(empty);
+          return;
+        }
+        filtered.forEach((hero) => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = `hero-option${state.pickedHero?.name === hero.name ? " selected" : ""}`;
+          button.setAttribute("role", "option");
+          button.setAttribute("aria-selected", String(state.pickedHero?.name === hero.name));
+          button.disabled = state.resolving;
+          if (hero.name === "Cho'Gall") {
+            const portraits = document.createElement("span");
+            portraits.className = "hero-pair-portraits";
+            portraits.append(heroPortrait("Cho", "hero-portrait"), heroPortrait("Gall", "hero-portrait"));
+            button.append(portraits);
+          } else {
+            button.append(heroPortrait(hero.name, "hero-portrait"));
+          }
+          const copy = document.createElement("span");
+          copy.className = "hero-copy";
+          const name = document.createElement("span");
+          name.textContent = hero.name;
+          const heroRole = document.createElement("small");
+          heroRole.textContent = roleShort[hero.role] || hero.role;
+          copy.append(name, heroRole);
+          button.append(copy);
+          button.addEventListener("click", () => {
+            state.pickedHero = hero;
+            nodes.confirm.disabled = false;
+            const choice = hero.name === "Cho'Gall" ? "Cho + Gall (ocupa tus dos picks)" : hero.name;
+            nodes.confirm.textContent = `Confirmar: ${choice}`;
+            nodes.pickerStatus.textContent = `${choice} seleccionado`;
+            nodes.hint.textContent = state.userTurnCount === 2
+              ? `Turno doble: Cho + Gall ocupa ambos picks. Al elegir otro héroe, el simulador resuelve el pick restante.`
+              : `Turno de un pick: elige un héroe. Cho'Gall solo está disponible en turnos dobles.`;
+            renderHeroList();
+          });
+          nodes.heroList.append(button);
+        });
+      }
+
+      function renderStatus() {
+        if (state.resolving) {
+          nodes.pickerStatus.textContent = `Tu pick quedó bloqueado: ${state.pickedHero.name}`;
+          nodes.progress.textContent = "Pick confirmado · preparando composiciones finales…";
+          nodes.confirm.disabled = true;
+          nodes.confirm.textContent = "Pick confirmado";
+          nodes.hint.textContent = "Tu héroe ya está en el equipo. En un momento aparecerán los picks restantes.";
+          return;
+        }
+        if (state.finished) {
+          nodes.pickerStatus.textContent = "Draft completado";
+          nodes.progress.textContent = "Draft completo · 10 picks · 6 bans";
+          nodes.confirm.disabled = true;
+          nodes.hint.textContent = "Genera un nuevo escenario para seguir practicando.";
+          return;
+        }
+        const lastPick = state.userTurn + state.userTurnCount;
+        const pickLabel = state.userTurnCount === 2
+          ? `Picks ${state.userTurn + 1}–${lastPick}`
+          : `Pick ${state.userTurn + 1}`;
+        nodes.pickerStatus.textContent = `Tu turno: ${pickLabel} · Equipo ${state.userTeam === "blue" ? "azul" : "rojo"}`;
+        const phase = state.userTurn < 6 ? "Primera fase de picks" : "Segunda fase de picks";
+        nodes.progress.textContent = `${phase} · ${pickLabel}/10 · ${state.userTeam === "blue" ? "Azul" : "Rojo"}`;
+        if (state.userTurnCount === 2) {
+          const duoAvailable = availableHeroes(2).some((hero) => hero.name === "Cho'Gall");
+          nodes.hint.textContent = duoAvailable
+            ? "Turno doble: puedes elegir Cho + Gall si la pareja sigue disponible; ocupan ambos picks."
+            : "Turno doble: Cho + Gall ya no está disponible (ya fue elegido o uno de los dos fue baneado). Elige un héroe y se resolverá el pick restante.";
+        } else {
+          nodes.hint.textContent = `Tu equipo: ${state.teams[state.userTeam].length}/5 picks antes de tu turno. Cho + Gall solo aparece en turnos dobles.`;
+        }
+      }
+
+      function countRoles(team) {
+        return team.reduce((counts, hero) => {
+          counts[hero.role] = (counts[hero.role] || 0) + 1;
+          return counts;
+        }, {});
+      }
+
+      function evaluatePick(hero, team, opponents) {
+        const pickedNames = hero.name === "Cho'Gall" ? ["Cho", "Gall"] : [hero.name];
+        const before = team.filter((pick) => !pickedNames.includes(pick.name));
+        const roles = countRoles(before);
+        const strengths = [];
+        const cautions = [];
+        if (hero.name === "Cho'Gall") strengths.push("Cho y Gall ocupan juntos los dos picks del turno doble: aportan tanque y daño a distancia.");
+        if (hero.role === "Tanque" && !roles["Tanque"]) strengths.push("Aporta la primera línea que faltaba.");
+        if (hero.role === "Sanador" && !roles["Sanador"]) strengths.push("Completa el rol de sanador, clave para sostener las peleas.");
+        if (hero.role === "Bruiser" && !roles["Bruiser"]) strengths.push("Añade presencia de línea y una segunda amenaza de primera línea.");
+        if (hero.role === "Asesino a distancia" && !roles["Asesino a distancia"]) strengths.push("Suma daño a distancia y ayuda a cubrir oleadas.");
+        if (hero.role === "Asesino cuerpo a cuerpo" && !roles["Asesino cuerpo a cuerpo"]) strengths.push("Incorpora una amenaza de entrada y daño de ráfaga.");
+        const fit = mapScore(hero, team);
+        if (fit >= 1.4) strengths.push(`Su perfil puede aportar al mapa (${state.map.tags.map((tag) => ({ solo: "línea", wave: "limpieza", siege: "asedio", camp: "campamentos", boss: "objetivo", teamfight: "teamfight" })[tag]).join(", ")}).`);
+        if (roles[hero.role]) cautions.push(`Tu equipo ya cuenta con ${roles[hero.role]} ${hero.role.toLocaleLowerCase("es")}${roles[hero.role] > 1 ? "s" : ""}; revisa si la duplicación compensa.`);
+        if (!roles["Sanador"] && before.length >= 3 && hero.role !== "Sanador") cautions.push("Todavía no hay sanador y el draft ya está avanzado.");
+        if (!roles["Tanque"] && before.length >= 3 && hero.role !== "Tanque") cautions.push("Considera si el equipo podrá iniciar o controlar el espacio sin tanque.");
+        if (opponents.some((opponent) => opponent.role === "Tanque") && hero.role === "Asesino cuerpo a cuerpo") cautions.push("La composición rival tiene tanque: evalúa cómo entrar y salir sin quedar controlado.");
+        if (!strengths.length) strengths.push("Puede funcionar como pick de daño o flex; piensa qué condición de victoria habilita.");
+        return { strengths, cautions };
+      }
+
+      function showAnalysis(hero, team, opponents) {
+        const { strengths, cautions } = evaluatePick(hero, team, opponents);
+        const roles = countRoles(team);
+        const missing = ["Tanque", "Sanador", "Bruiser", "Asesino a distancia"]
+          .filter((role) => !roles[role]);
+        const intro = document.createElement("p");
+        intro.textContent = hero.name === "Cho'Gall"
+          ? "Elegiste a Cho y Gall juntos, ocupando los dos picks del turno doble. Revisa qué deja cubierto y qué le falta a tu composición:"
+          : `Elegiste ${hero.name} (${hero.role}). Revisa qué deja cubierto y qué le falta a tu composición:`;
+        const list = document.createElement("ul");
+        strengths.forEach((text) => {
+          const item = document.createElement("li");
+          item.innerHTML = `<strong>A favor</strong> · ${text}`;
+          list.append(item);
+        });
+        cautions.forEach((text) => {
+          const item = document.createElement("li");
+          item.className = "caution";
+          item.innerHTML = `<strong>A revisar</strong> · ${text}`;
+          list.append(item);
+        });
+        const last = document.createElement("li");
+        last.className = "caution";
+        const missingLabels = missing.map((role) => roleShort[role] || role);
+        last.innerHTML = `<strong>Huecos de equipo</strong> · ${missingLabels.length ? missingLabels.join(", ") : "roles principales cubiertos"}${missingLabels.length ? " (antes de tu pick)" : ""}.`;
+        list.append(last);
+        nodes.analysis.replaceChildren(intro, list);
+      }
+
+      function completeDraft(hero, teamAtPick, opponentsAtPick) {
+        if (hero.name !== "Cho'Gall" && state.userTurnCount === 2) {
+          simulateBotTurn({ team: state.userTeam, count: 1 });
+        }
+        for (let turnIndex = state.userTurnIndex + 1; turnIndex < state.pickTurns.length; turnIndex += 1) {
+          const turn = state.pickTurns[turnIndex];
+          if (!state.secondBanPhase && turn.start === 6) simulateSecondBanPhase();
+          simulateBotTurn(turn);
+        }
+        state.resolving = false;
+        state.finished = true;
+        const total = getStoredGames() + 1;
+        localStorage.setItem("draft-lab-games", String(total));
+        $("#game-count").textContent = String(total);
+        renderDraft();
+        renderHeroList();
+        renderStatus();
+        showAnalysis(hero, teamAtPick, opponentsAtPick);
+        nodes.pickerStatus.textContent = `Pick registrado: ${hero.name}`;
+      }
+
+      function confirmPick() {
+        if (!state.pickedHero || state.finished || state.resolving) return;
+        const hero = state.pickedHero;
+        const firstSlot = state.teams[state.userTeam].length;
+        const pickedHeroes = picksForHero(hero);
+        const teamAtPick = [...state.teams[state.userTeam], ...pickedHeroes];
+        const opponentTeam = state.userTeam === "blue" ? "red" : "blue";
+        const opponentsAtPick = [...state.teams[opponentTeam]];
+        state.teams[state.userTeam].push(...pickedHeroes);
+        state.userSlots = pickedHeroes.map((_, index) => firstSlot + index);
+        state.resolving = true;
+        $("#new-draft").disabled = true;
+        renderStatus();
+        renderDraft();
+        renderHeroList();
+        window.setTimeout(() => {
+          completeDraft(hero, teamAtPick, opponentsAtPick);
+          $("#new-draft").disabled = false;
+        }, 1400);
+      }
+
+      function startDraft() {
+        state.map = randomItem(maps);
+        state.teams = { blue: [], red: [] };
+        state.bans = { blue: [], red: [] };
+        state.firstTeam = Math.random() < 0.5 ? "blue" : "red";
+        const otherTeam = state.firstTeam === "blue" ? "red" : "blue";
+        let nextPick = 0;
+        state.pickTurns = pickTurnPattern.map(({ side, count }, index) => {
+          const turn = {
+            team: side === 0 ? state.firstTeam : otherTeam,
+            count,
+            start: nextPick,
+            phase: index < 4 ? 1 : 2
+          };
+          nextPick += count;
+          return turn;
+        });
+        state.userTurnIndex = Math.floor(Math.random() * state.pickTurns.length);
+        const userTurn = state.pickTurns[state.userTurnIndex];
+        state.userTurn = userTurn.start;
+        state.userTurnCount = userTurn.count;
+        state.userTeam = userTurn.team;
+        state.pickedHero = null;
+        state.finished = false;
+        state.resolving = false;
+        state.secondBanPhase = false;
+        simulateFirstBanPhase();
+        for (let index = 0; index < state.userTurnIndex; index += 1) {
+          const turn = state.pickTurns[index];
+          if (!state.secondBanPhase && turn.start === 6) simulateSecondBanPhase();
+          simulateBotTurn(turn);
+        }
+        if (!state.secondBanPhase && userTurn.start === 6) simulateSecondBanPhase();
+        nodes.map.textContent = state.map.name;
+        const mapImage = makeImage(
+          `https://nexuscompendium.com/images/battlegrounds/${state.map.image}/main.jpg`,
+          `Imagen del mapa ${state.map.name}`,
+          ""
+        );
+        $("#map-art").replaceChildren(mapImage);
+        nodes.feature.textContent = state.map.feature;
+        const firstPickNumber = userTurn.start + 1;
+        const lastPickNumber = userTurn.start + userTurn.count;
+        const pickNumber = userTurn.count === 2
+          ? `Picks ${firstPickNumber}–${lastPickNumber} (doble)`
+          : `Pick ${firstPickNumber}`;
+        nodes.turn.textContent = `Tu turno: ${pickNumber} · ${state.userTeam === "blue" ? "Equipo azul" : "Equipo rojo"}`;
+        nodes.challenge.textContent = state.map.need;
+        nodes.search.value = "";
+        nodes.role.value = "";
+        nodes.confirm.disabled = true;
+        nodes.confirm.textContent = "Confirmar pick";
+        $("#new-draft").disabled = false;
+        nodes.analysis.replaceChildren(Object.assign(document.createElement("p"), {
+          textContent: "Cuando confirmes tu pick, aquí verás una revisión orientativa de lo que aporta a la composición. No hay una única respuesta correcta."
+        }));
+        renderDraft();
+        renderHeroList();
+        renderStatus();
+      }
+
+      $("#new-draft").addEventListener("click", startDraft);
+      $("#reset-stats").addEventListener("click", () => {
+        localStorage.removeItem("draft-lab-games");
+        $("#game-count").textContent = "0";
+      });
+      nodes.search.addEventListener("input", renderHeroList);
+      nodes.role.addEventListener("change", renderHeroList);
+      nodes.confirm.addEventListener("click", confirmPick);
+      $("#game-count").textContent = String(getStoredGames());
+      startDraft();
+    </script>
+  </body>
+</html>
